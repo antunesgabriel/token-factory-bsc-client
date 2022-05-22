@@ -1,8 +1,9 @@
 import { useWeb3React } from "@web3-react/core";
-import { ethers } from "ethers";
+import { ethers, Event } from "ethers";
 import { useCallback, useMemo, useState } from "react";
 
 import contractData from "../assets/json/TokenFactory.json";
+import ButtonsHandleToken from "../components/buttons-handle-token.component";
 import InputComponent from "../components/input.component";
 
 const ABI = contractData.abi;
@@ -14,6 +15,7 @@ function HomePage() {
   const [tokenSupply, setTokenSupply] = useState("");
   const [inProgress, setInProgress] = useState(false);
 
+  const [newContractAddress, setNewContractAddress] = useState("");
   const [transactionHash, setTransactionHash] = useState("");
 
   const { account } = useWeb3React();
@@ -34,7 +36,7 @@ function HomePage() {
       return alert("Connect your Metamask wallet");
     }
 
-    if (!tokenName || !tokenSupply || !tokenSupply) {
+    if (!tokenName.trim() || !tokenSupply.trim() || !tokenSupply.trim()) {
       return alert("Fill all fields");
     }
 
@@ -46,40 +48,55 @@ function HomePage() {
         Number(tokenSupply)
       );
 
-      await trx.wait();
+      const recipe = await trx.wait();
 
-      console.info("Minerado...", trx.hash);
-
-      setTokenName("");
-      setTokenSymbol("");
-      setTokenSupply("");
-
+      setNewContractAddress((recipe?.events as Event[])?.[0].address);
       setTransactionHash(trx.hash);
     } catch (err) {
       console.log(err);
     } finally {
       setInProgress(false);
     }
-  }, [account]);
+  }, [account, tokenName, tokenSupply, tokenSymbol]);
+
+  const addTokenToWallet = useCallback(async () => {
+    try {
+      const wasAdded = await window.ethereum.request({
+        method: "wallet_watchAsset",
+        params: {
+          type: "ERC20",
+          options: {
+            address: newContractAddress,
+            symbol: tokenSymbol,
+            decimals: 18,
+            image: "",
+          },
+        },
+      });
+      console.log(wasAdded);
+    } catch (err) {
+      console.log((err as Error).message);
+    }
+  }, []);
+
+  const clearAll = () => {
+    setTokenName("");
+    setTokenSupply("");
+    setTokenSymbol("");
+    setNewContractAddress("");
+    setTransactionHash("");
+  };
 
   const onChangeSymbol = ($e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = $e.target;
 
     setTokenSymbol(value.trim().toUpperCase());
-
-    if (transactionHash) {
-      setTransactionHash("");
-    }
   };
 
   const onChangeTokenName = ($e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = $e.target;
 
     setTokenName(value);
-
-    if (transactionHash) {
-      setTransactionHash("");
-    }
   };
 
   const onChangeTokenSupply = ($e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,10 +105,6 @@ function HomePage() {
     const supply = value.trim().replace(/\D/gi, "");
 
     setTokenSupply(supply);
-
-    if (transactionHash) {
-      setTransactionHash("");
-    }
   };
 
   return (
@@ -101,48 +114,49 @@ function HomePage() {
           Create Your Token:
         </h2>
 
-        {!!transactionHash && (
-          <a
-            href={`https://testnet.bscscan.com/tx/${transactionHash}`}
-            className="text-green-500 text-center text-sm mb-5 block underline"
-            target="_blank"
-          >
-            See your token in TestNet BSCScan:{" "}
-            {`${transactionHash.slice(0, 4)}...${transactionHash.slice(-4)}`}
-          </a>
+        {Boolean(transactionHash) && Boolean(newContractAddress) && (
+          <ButtonsHandleToken
+            transactionHash={transactionHash}
+            onClikAddTokenToWallet={addTokenToWallet}
+            clearAll={clearAll}
+          />
         )}
 
-        <InputComponent
-          name="tokenName"
-          placeholder="Token Name"
-          className="mb-5"
-          onChange={onChangeTokenName}
-          value={tokenName}
-        />
+        {!transactionHash && !newContractAddress && (
+          <>
+            <InputComponent
+              name="tokenName"
+              placeholder="Token Name"
+              className="mb-5"
+              onChange={onChangeTokenName}
+              value={tokenName}
+            />
 
-        <InputComponent
-          name="tokenSymbol"
-          placeholder="Token Symbol"
-          value={tokenSymbol}
-          className="mb-5"
-          onChange={onChangeSymbol}
-        />
+            <InputComponent
+              name="tokenSymbol"
+              placeholder="Token Symbol"
+              value={tokenSymbol}
+              className="mb-5"
+              onChange={onChangeSymbol}
+            />
 
-        <InputComponent
-          name="tokenSupply"
-          placeholder="Token Supply"
-          value={tokenSupply}
-          onChange={onChangeTokenSupply}
-        />
+            <InputComponent
+              name="tokenSupply"
+              placeholder="Token Supply"
+              value={tokenSupply}
+              onChange={onChangeTokenSupply}
+            />
 
-        <button
-          type="button"
-          className="btn btn-primary mt-7 mx-auto"
-          onClick={onSubmit}
-          disabled={inProgress}
-        >
-          {inProgress ? "Creating..." : "Generate My Token"}
-        </button>
+            <button
+              type="button"
+              className="btn btn-primary mt-7 mx-auto"
+              onClick={onSubmit}
+              disabled={inProgress}
+            >
+              {inProgress ? "Creating..." : "Generate My Token"}
+            </button>
+          </>
+        )}
       </form>
     </div>
   );
