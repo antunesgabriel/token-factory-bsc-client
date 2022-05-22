@@ -9,6 +9,7 @@ import {
 
 import HomePage from "./pages/home.page";
 import HeaderComponent from "./components/header.component";
+import Footer from "./components/footer.component";
 
 function getLibrary(provider: ExternalProvider | JsonRpcFetchFunc) {
   return new Web3Provider(provider);
@@ -20,6 +21,7 @@ function Dapp() {
       <main className="min-h-screen bg-brand-black2 flex flex-col relative">
         <HeaderComponent />
         <HomePage />
+        <Footer />
       </main>
     </Web3ReactProvider>
   );
