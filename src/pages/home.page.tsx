@@ -77,15 +77,15 @@ function HomePage() {
     } catch (err) {
       console.log((err as Error).message);
     }
-  }, []);
+  }, [newContractAddress, tokenSymbol]);
 
-  const clearAll = () => {
+  const clearAll = useCallback(() => {
     setTokenName("");
     setTokenSupply("");
     setTokenSymbol("");
     setNewContractAddress("");
     setTransactionHash("");
-  };
+  }, []);
 
   const onChangeSymbol = ($e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = $e.target;
