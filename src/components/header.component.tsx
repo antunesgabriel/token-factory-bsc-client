@@ -1,64 +1,60 @@
-import { useWeb3React } from "@web3-react/core";
-import { useCallback, useMemo } from "react";
-
-import { InjectedWalletConnector } from "../utils/wallets-connectors.util";
+import { useMemo } from "react";
+import { useAccount, useConnect, useEnsName } from "wagmi";
+import { InjectedConnector } from "wagmi/connectors/injected";
 
 import logo from "../assets/images/logo.png";
 
 const HeaderComponent = () => {
-  const { activate, deactivate, active, account } = useWeb3React();
+  const { data: account } = useAccount();
+  const { data: ensName } = useEnsName({ address: account?.address });
 
-  const switchNetwork = useCallback(async () => {
-    try {
-      await window.ethereum.request({
-        method: "wallet_switchEthereumChain",
-        params: [{ chainId: "0x61" }],
-      });
+  const { connect } = useConnect({
+    connector: new InjectedConnector(),
+  });
 
-      return;
-    } catch (_) {
-      await window.ethereum.request({
-        method: "wallet_addEthereumChain",
-        params: [
-          {
-            chainName: "Binance Smart Chain Testnet",
-            chainId: "0x61",
-            nativeCurrency: {
-              name: "Binance Chain Native Token",
-              symbol: "tBNB",
-              decimals: 18,
-            },
-            rpcUrls: ["https://data-seed-prebsc-1-s1.binance.org:8545"],
-            blockExplorerUrls: ["https://testnet.bscscan.com"],
-            iconUrls: [
-              "https://harmonynews.one/wp-content/uploads/2019/11/slfdjs.png",
-            ],
-          },
-        ],
-      });
-    }
-  }, []);
+  // const switchNetwork = useCallback(async () => {
+  //   try {
+  //     await window.ethereum.request({
+  //       method: "wallet_switchEthereumChain",
+  //       params: [{ chainId: "0x61" }],
+  //     });
 
-  const onClickConnect = useCallback(async () => {
-    try {
-      await switchNetwork();
-      activate(InjectedWalletConnector);
-    } catch (err) {
-      console.warn("error on connect");
-    }
-  }, [switchNetwork]);
+  //     return;
+  //   } catch (_) {
+  //     await window.ethereum.request({
+  //       method: "wallet_addEthereumChain",
+  //       params: [
+  //         {
+  //           chainName: "Binance Smart Chain Testnet",
+  //           chainId: "0x61",
+  //           nativeCurrency: {
+  //             name: "Binance Chain Native Token",
+  //             symbol: "tBNB",
+  //             decimals: 18,
+  //           },
+  //           rpcUrls: ["https://data-seed-prebsc-1-s1.binance.org:8545"],
+  //           blockExplorerUrls: ["https://testnet.bscscan.com"],
+  //           iconUrls: [
+  //             "https://harmonynews.one/wp-content/uploads/2019/11/slfdjs.png",
+  //           ],
+  //         },
+  //       ],
+  //     });
+  //   }
+  // }, []);
 
   const accountToDisplay = useMemo(() => {
-    if (!account) {
+    if (!ensName || !account?.address) {
       return "";
     }
 
-    return `Connect With: ${account.slice(0, 4)}...${account.slice(-4)}`;
+    return `Connect With: ${account.address.slice(
+      0,
+      4
+    )}...${account.address.slice(-4)}`;
   }, [account]);
 
-  const onClickDisconnect = () => {
-    deactivate();
-  };
+  const onClickDisconnect = async () => {};
 
   return (
     <div className="px-4 h-16 border-b border-zinc-800 flex items-center justify-between">
@@ -69,12 +65,8 @@ const HeaderComponent = () => {
           {accountToDisplay}
         </div>
 
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={active ? onClickDisconnect : onClickConnect}
-        >
-          {active ? "Disconnect" : "Connect Wallet"}
+        <button type="button" className="btn btn-primary">
+          Connect Wallet
         </button>
       </div>
     </div>
