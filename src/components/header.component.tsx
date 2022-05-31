@@ -1,72 +1,65 @@
-import { useMemo } from "react";
-import { useAccount, useConnect, useEnsName } from "wagmi";
-import { InjectedConnector } from "wagmi/connectors/injected";
+import { useEffect, useMemo, useState } from "react";
+import { useAccount, useConnect, useDisconnect, useNetwork } from "wagmi";
 
 import logo from "../assets/images/logo.png";
+import ModalConnectors from "./modal-connectors.component";
 
 const HeaderComponent = () => {
   const { data: account } = useAccount();
-  const { data: ensName } = useEnsName({ address: account?.address });
+  const { disconnect } = useDisconnect();
+  const { activeConnector, isConnecting } = useConnect();
+  const { activeChain, switchNetwork } = useNetwork();
 
-  const { connect } = useConnect({
-    connector: new InjectedConnector(),
-  });
-
-  // const switchNetwork = useCallback(async () => {
-  //   try {
-  //     await window.ethereum.request({
-  //       method: "wallet_switchEthereumChain",
-  //       params: [{ chainId: "0x61" }],
-  //     });
-
-  //     return;
-  //   } catch (_) {
-  //     await window.ethereum.request({
-  //       method: "wallet_addEthereumChain",
-  //       params: [
-  //         {
-  //           chainName: "Binance Smart Chain Testnet",
-  //           chainId: "0x61",
-  //           nativeCurrency: {
-  //             name: "Binance Chain Native Token",
-  //             symbol: "tBNB",
-  //             decimals: 18,
-  //           },
-  //           rpcUrls: ["https://data-seed-prebsc-1-s1.binance.org:8545"],
-  //           blockExplorerUrls: ["https://testnet.bscscan.com"],
-  //           iconUrls: [
-  //             "https://harmonynews.one/wp-content/uploads/2019/11/slfdjs.png",
-  //           ],
-  //         },
-  //       ],
-  //     });
-  //   }
-  // }, []);
+  const [isOpen, setIsOpen] = useState(false);
 
   const accountToDisplay = useMemo(() => {
-    if (!ensName || !account?.address) {
+    if (!account?.address) {
       return "";
     }
 
     return `Connect With: ${account.address.slice(
       0,
       4
-    )}...${account.address.slice(-4)}`;
+    )}...${account.address.slice(-4)} -`;
   }, [account]);
 
-  const onClickDisconnect = async () => {};
+  useEffect(() => {
+    if (activeChain?.id !== 97 && switchNetwork) {
+      switchNetwork(97);
+    }
+  }, [activeChain]);
 
   return (
     <div className="px-4 h-16 border-b border-zinc-800 flex items-center justify-between">
+      <ModalConnectors
+        isOpen={isOpen}
+        onClose={() => {
+          setIsOpen((o) => !o);
+        }}
+        title="Connect your wallet"
+        describe="At the moment this dapp only interacts with the BSC (Testnet)"
+      />
+
       <img src={logo} />
 
       <div className="flex items-center gap-3">
         <div className="text-white font-semibold text-sm hidden md:inline-block">
-          {accountToDisplay}
+          {accountToDisplay} {activeConnector?.name}
         </div>
 
-        <button type="button" className="btn btn-primary">
-          Connect Wallet
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={isConnecting}
+          onClick={
+            account?.address
+              ? () => disconnect()
+              : () => {
+                  setIsOpen((o) => !o);
+                }
+          }
+        >
+          {account?.address ? "Disconnect" : "Connect Wallet"}
         </button>
       </div>
     </div>

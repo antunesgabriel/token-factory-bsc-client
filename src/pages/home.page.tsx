@@ -1,6 +1,6 @@
-import { useWeb3React } from "@web3-react/core";
 import { ethers, Event } from "ethers";
-import { useCallback, useMemo, useState } from "react";
+import { useContract, useProvider, useSigner, useClient } from "wagmi";
+import { useCallback, useState } from "react";
 
 import contractData from "../assets/json/TokenFactory.json";
 import ButtonsHandleToken from "../components/buttons-handle-token.component";
@@ -18,21 +18,17 @@ function HomePage() {
   const [newContractAddress, setNewContractAddress] = useState("");
   const [transactionHash, setTransactionHash] = useState("");
 
-  const { account } = useWeb3React();
+  const { data: signer } = useSigner();
+  const client = useClient();
 
-  const contract = useMemo(() => {
-    if (!account) {
-      return null;
-    }
-
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const signer = provider.getSigner();
-
-    return new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-  }, [account]);
+  const contract = useContract<ethers.Contract>({
+    addressOrName: CONTRACT_ADDRESS,
+    contractInterface: ABI,
+    signerOrProvider: signer,
+  });
 
   const onSubmit = useCallback(async () => {
-    if (!account) {
+    if (!contract) {
       return alert("Connect your Metamask wallet");
     }
 
@@ -57,11 +53,13 @@ function HomePage() {
     } finally {
       setInProgress(false);
     }
-  }, [account, tokenName, tokenSupply, tokenSymbol]);
+  }, [contract, tokenName, tokenSupply, tokenSymbol]);
 
   const addTokenToWallet = useCallback(async () => {
     try {
-      const wasAdded = await window.ethereum.request({
+      const provider = await client.connector?.getProvider();
+
+      const wasAdded = await provider?.request({
         method: "wallet_watchAsset",
         params: {
           type: "ERC20",
