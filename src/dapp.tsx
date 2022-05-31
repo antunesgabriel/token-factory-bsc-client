@@ -47,7 +47,6 @@ const client = createClient({
     new WalletConnectConnector({
       options: {
         qrcode: true,
-        infuraId: "27e484dcd9e3efcfd25a83a78777cdf1",
         rpc: {
           97: "https://data-seed-prebsc-1-s1.binance.org:8545",
         },

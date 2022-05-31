@@ -50,6 +50,7 @@ function HomePage() {
       setTransactionHash(trx.hash);
     } catch (err) {
       console.log(err);
+      alert((err as Error).message);
     } finally {
       setInProgress(false);
     }
