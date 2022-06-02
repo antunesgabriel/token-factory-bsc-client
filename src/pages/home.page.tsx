@@ -1,10 +1,17 @@
 import { ethers, Event } from "ethers";
-import { useContract, useProvider, useSigner, useClient } from "wagmi";
+import {
+  useContract,
+  useProvider,
+  useSigner,
+  useClient,
+  useConnect,
+} from "wagmi";
 import { useCallback, useState } from "react";
 
 import contractData from "../assets/json/TokenFactory.json";
 import ButtonsHandleToken from "../components/buttons-handle-token.component";
 import InputComponent from "../components/input.component";
+import SpinnerComponent from "../components/spinner.component";
 
 const ABI = contractData.abi;
 const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS;
@@ -18,6 +25,7 @@ function HomePage() {
   const [newContractAddress, setNewContractAddress] = useState("");
   const [transactionHash, setTransactionHash] = useState("");
 
+  const { isConnected } = useConnect();
   const { data: signer } = useSigner();
   const client = useClient();
 
@@ -148,11 +156,11 @@ function HomePage() {
 
             <button
               type="button"
-              className="btn btn-primary mt-7 mx-auto"
+              className="btn btn-primary mt-7 mx-auto disabled:cursor-not-allowed disabled:opacity-20"
               onClick={onSubmit}
-              disabled={inProgress}
+              disabled={inProgress || !isConnected}
             >
-              {inProgress ? "Creating..." : "Generate My Token"}
+              {inProgress ? <SpinnerComponent /> : "Generate My Token"}
             </button>
           </>
         )}

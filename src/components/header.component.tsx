@@ -17,10 +17,9 @@ const HeaderComponent = () => {
       return "";
     }
 
-    return `Connect With: ${account.address.slice(
-      0,
-      4
-    )}...${account.address.slice(-4)} -`;
+    return `Connected: ${account.address.slice(0, 4)}...${account.address.slice(
+      -4
+    )} -`;
   }, [account]);
 
   useEffect(() => {
